@@ -29,3 +29,6 @@ paper/media/
 
 # Machine-specific local env
 .Renviron
+
+pals.Rcheck/
+pals_*.tar.gz

@@ -70,3 +70,25 @@ PLAN FOR THIS SESSION:
   environmental (no system pandoc on PATH for check subprocess; HTML Tidy/V8
   absent) and are clean on the GitHub Actions CI.
 - Re-running plain R CMD check after fixes.
+
+- PLAIN R CMD check (post-fixes): Status: OK — 0 errors, 0 warnings, 0 NOTEs.
+  Package is clean. (The only --as-cran WARNING was the CRAN name clash, which is
+  irrelevant for JOSS / GitHub distribution.)
+- Rebuilt final pals_0.1.0.tar.gz.
+
+=== STATUS: COMPLETE ===
+All session goals met:
+  [x] R CMD check passes cleanly (Status: OK)
+  [x] testthat tests for all core functions (8 test files, all pass)
+  [x] Usage vignette (vignettes/pals.Rmd) + bibliography
+  [x] Bootstrap uncertainty + Rubin's Rules (bootstrap_pals, pool_rubin)
+  [x] Simulated dataset (data/nigeria_sim.rda + simulate_conflict_events)
+  [x] README.md
+  [x] JOSS paper (paper/paper.md ~790 words + paper.bib)
+  [x] GitHub Actions CI (.github/workflows/R-CMD-check.yaml)
+  [x] NEWS.md
+  [x] Committed + pushed to origin/main throughout
+Follow-ups for authors before formal submission:
+  - Add real ORCIDs / confirm affiliations in paper/paper.md.
+  - If targeting CRAN (not required for JOSS), the package name 'pals' collides
+    with an existing CRAN package; a rename (e.g. 'palsr') would be needed.
