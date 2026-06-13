@@ -1,7 +1,7 @@
 #' @keywords internal
 "_PACKAGE"
 
-#' @useDynLib pals, .registration = TRUE
+#' @useDynLib palsr, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 #' @importFrom stats coef
 ## usethis namespace: start

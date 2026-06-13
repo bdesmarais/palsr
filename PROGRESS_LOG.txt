@@ -92,3 +92,16 @@ Follow-ups for authors before formal submission:
   - Add real ORCIDs / confirm affiliations in paper/paper.md.
   - If targeting CRAN (not required for JOSS), the package name 'pals' collides
     with an existing CRAN package; a rename (e.g. 'palsr') would be needed.
+
+=== RENAME (2026-06-13): pals -> palsr ===
+- Renamed the package from 'pals' to 'palsr' to avoid the CRAN name clash with the
+  unrelated 'pals' (colour palettes) package. Method name "PALS" and the API
+  (pal_events, pals_params, project_pals, etc.) are unchanged; only the package
+  identifier changed.
+- Updated DESCRIPTION (Package + URLs), @useDynLib, \pkg{}, tests (library/test_check/
+  :::/data(package=)), vignette (library + bibliography), README, NEWS, paper.
+  Used perl \b boundaries so class/function names (pals_fit, project_pals) untouched.
+- Regenerated src/R RcppExports via Rcpp::compileAttributes (_palsr_, R_init_palsr)
+  and NAMESPACE/man via roxygen (palsr-package.Rd). Renamed vignette/bib and
+  R/palsr-package.R files.
+- R CMD check on palsr_0.1.0.tar.gz: Status: OK (0/0/0).

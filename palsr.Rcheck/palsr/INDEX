@@ -1,0 +1,20 @@
+bootstrap_pals          Nonparametric bootstrap for PALS estimates and
+                        projections
+estimate_pals           Estimate PALS parameters
+haversine               Great-circle (Haversine) distance
+nigeria_sim             Simulated subnational conflict events
+                        (Nigeria-like)
+pal_distance            Dyadic distance between Projected Actor
+                        Locations
+pal_events              Construct a validated dyadic-event table
+pals_params             Create a PALS parameter set
+pool_rubin              Pool estimates across imputations with Rubin's
+                        Rules
+predict.pals_fit        Project locations from a fitted PALS model
+predict_event_locations
+                        Predict dyadic event locations
+project_pal             Project the location of a single actor
+project_pals            Project locations for multiple actors
+simulate_conflict_events
+                        Simulate dyadic conflict events between moving
+                        actors

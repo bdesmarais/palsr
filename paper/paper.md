@@ -1,5 +1,5 @@
 ---
-title: 'pals: Projected Actor Locations for spatial modeling of dyadic interactions between moving actors'
+title: 'palsr: Projected Actor Locations for spatial modeling of dyadic interactions between moving actors'
 tags:
   - R
   - political science
@@ -40,7 +40,7 @@ by @kim2023pals, fills this gap by estimating where a mobile actor effectively
 interactions, and using these projected locations to model the distance between
 --- and the probability of interaction among --- pairs of actors.
 
-`pals` is an R package that implements the complete PALS workflow: constructing
+`palsr` is an R package that implements the complete PALS workflow: constructing
 and validating dyadic event data, estimating the smoothing parameters by
 minimizing great-circle prediction error, projecting actor locations at
 arbitrary times, building the dyadic distance covariates used in downstream
@@ -70,7 +70,7 @@ PALS addresses this need, and the original article [@kim2023pals] demonstrates
 that PALS-based distances substantially improve the prediction of subnational
 conflict relative to naive location measures. However, that contribution was
 accompanied only by replication scripts specific to a single application.
-`pals` turns the method into reusable, documented, and tested research software.
+`palsr` turns the method into reusable, documented, and tested research software.
 It lets applied researchers in political science, conflict studies, economics,
 and geography apply PALS to their own dyadic event data without re-deriving the
 estimator, provides a principled bootstrap procedure for propagating estimation
@@ -123,7 +123,7 @@ only $\alpha$, which is fast and frequently competitive.
 # Example
 
 ```r
-library(pals)
+library(palsr)
 data(nigeria_sim)                       # 1,500 dyadic events, 25 mobile actors
 
 fit <- estimate_pals(nigeria_sim, model = "one")   # estimate alpha

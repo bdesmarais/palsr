@@ -1,0 +1,363 @@
+
+R version 4.6.0 (2026-04-24) -- "Because it was There"
+Copyright (C) 2026 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin23
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> pkgname <- "palsr"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> library('palsr')
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("bootstrap_pals")
+> ### * bootstrap_pals
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: bootstrap_pals
+> ### Title: Nonparametric bootstrap for PALS estimates and projections
+> ### Aliases: bootstrap_pals
+> 
+> ### ** Examples
+> 
+> ev <- simulate_conflict_events(n_actors = 8, n_events = 200, seed = 1)
+> bt <- bootstrap_pals(ev, R = 10, model = "one", seed = 1)
+> summary(bt)
+<pals_boot> summary (10 replicates, 95% percentile intervals)
+   term estimate boot_mean boot_se  lower upper
+1 alpha   0.9948    0.9451  0.1515 0.7632 1.206
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("estimate_pals")
+> ### * estimate_pals
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: estimate_pals
+> ### Title: Estimate PALS parameters
+> ### Aliases: estimate_pals
+> 
+> ### ** Examples
+> 
+> ev  <- simulate_conflict_events(n_actors = 10, n_events = 300, seed = 1)
+> fit <- estimate_pals(ev, model = "one")
+> fit
+<pals_fit> one-parameter PALS model
+<pals_params> (one-parameter model)
+  alpha = 0.6182  (pi fixed at 0)
+  objective (mean Haversine km): 106.7544 over 297 events
+> coef(fit)
+    alpha 
+0.6182106 
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("haversine")
+> ### * haversine
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: haversine
+> ### Title: Great-circle (Haversine) distance
+> ### Aliases: haversine
+> 
+> ### ** Examples
+> 
+> haversine(0, 0, 0, 1)          # ~111 km per degree of latitude
+[1] 111.1951
+> haversine(7.4, 9.1, 8.5, 12.0) # Abuja-ish to Kano-ish
+[1] 344.1512
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("nigeria_sim")
+> ### * nigeria_sim
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: nigeria_sim
+> ### Title: Simulated subnational conflict events (Nigeria-like)
+> ### Aliases: nigeria_sim
+> ### Keywords: datasets
+> 
+> ### ** Examples
+> 
+> data(nigeria_sim)
+> nigeria_sim
+<pal_events>
+  events: 1500
+  actors: 25
+  time:   2000-01-05 to 2016-12-24
+  bbox:   lon [2.70, 14.70], lat [5.11, 13.90]
+> fit <- estimate_pals(nigeria_sim, model = "one")
+> coef(fit)
+    alpha 
+0.8739538 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("pal_distance")
+> ### * pal_distance
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: pal_distance
+> ### Title: Dyadic distance between Projected Actor Locations
+> ### Aliases: pal_distance
+> 
+> ### ** Examples
+> 
+> ev  <- simulate_conflict_events(n_actors = 8, n_events = 200, seed = 1)
+> fit <- estimate_pals(ev, model = "one")
+> dy  <- data.frame(actor1 = "G01", actor2 = "G02",
++                   time = as.Date("2012-12-01"))
+> pal_distance(ev, dy, fit)
+  actor1 actor2       time pal_distance
+1    G01    G02 2012-12-01     182.3826
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("pal_events")
+> ### * pal_events
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: pal_events
+> ### Title: Construct a validated dyadic-event table
+> ### Aliases: pal_events
+> 
+> ### ** Examples
+> 
+> df <- data.frame(
++   from = c("A", "A", "B"),
++   to   = c("B", "C", "C"),
++   when = as.Date(c("2001-01-01", "2001-06-01", "2002-01-01")),
++   x    = c(7.1, 8.0, 7.5),
++   y    = c(9.0, 9.4, 10.1)
++ )
+> ev <- pal_events(df, actor1 = "from", actor2 = "to",
++                  time = "when", lon = "x", lat = "y")
+> ev
+<pal_events>
+  events: 3
+  actors: 3
+  time:   2001-01-01 to 2002-01-01
+  bbox:   lon [7.10, 8.00], lat [9.00, 10.10]
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("pals_params")
+> ### * pals_params
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: pals_params
+> ### Title: Create a PALS parameter set
+> ### Aliases: pals_params
+> 
+> ### ** Examples
+> 
+> p <- pals_params(alpha = 0.9, beta = 0.2, gamma = -10, eta = -10)
+> p
+<pals_params> (four-parameter model)
+  alpha = 0.9, beta = 0.2, gamma = -10, eta = -10
+> pals_params(alpha = 0.9, model = "one")
+<pals_params> (one-parameter model)
+  alpha = 0.9  (pi fixed at 0)
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("pool_rubin")
+> ### * pool_rubin
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: pool_rubin
+> ### Title: Pool estimates across imputations with Rubin's Rules
+> ### Aliases: pool_rubin
+> 
+> ### ** Examples
+> 
+> # Five imputations of a coefficient and its variance.
+> q <- c(1.10, 0.95, 1.20, 1.05, 0.98)
+> u <- c(0.04, 0.05, 0.045, 0.038, 0.052)
+> pool_rubin(q, u)
+   qbar  ubar       b        t        se       fmi
+1 1.056 0.045 0.00993 0.056916 0.2385707 0.2093612
+> pool_rubin(q, u, df = TRUE, dfcom = 100)
+   qbar  ubar       b        t        se       fmi       df    p.value
+1 1.056 0.045 0.00993 0.056916 0.2385707 0.2093612 41.91733 6.7103e-05
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("predict.pals_fit")
+> ### * predict.pals_fit
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: predict.pals_fit
+> ### Title: Project locations from a fitted PALS model
+> ### Aliases: predict.pals_fit
+> 
+> ### ** Examples
+> 
+> ev  <- simulate_conflict_events(n_actors = 8, n_events = 200, seed = 1)
+> fit <- estimate_pals(ev, model = "one")
+> predict(fit, predict_time = as.Date("2013-12-01"), type = "pal")[1:5, ]
+  actor       time       lon       lat n_focal n_alter has_history
+1   G01 2013-12-01  7.792795  9.742455      72     161        TRUE
+2   G02 2013-12-01  7.325095  7.961038      41     164        TRUE
+3   G03 2013-12-01 10.410217  8.633238      31     164        TRUE
+4   G04 2013-12-01 13.181587  7.896180      40     131        TRUE
+5   G05 2013-12-01  5.647468 11.042796      39     149        TRUE
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("predict_event_locations")
+> ### * predict_event_locations
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: predict_event_locations
+> ### Title: Predict dyadic event locations
+> ### Aliases: predict_event_locations
+> 
+> ### ** Examples
+> 
+> ev  <- simulate_conflict_events(n_actors = 10, n_events = 300, seed = 1)
+> fit <- estimate_pals(ev, model = "one")
+> tg  <- ev[ev$time > as.Date("2012-01-01"), ]
+> head(predict_event_locations(ev, tg, fit))
+<pal_events>
+  events: 6
+  actors: 6
+  time:   2012-01-04 to 2012-02-16
+  bbox:   lon [5.63, 11.00], lat [7.79, 12.66]
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("project_pal")
+> ### * project_pal
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: project_pal
+> ### Title: Project the location of a single actor
+> ### Aliases: project_pal
+> 
+> ### ** Examples
+> 
+> ev <- simulate_conflict_events(n_actors = 8, n_events = 200, seed = 1)
+> p  <- pals_params(alpha = 0.9, model = "one")
+> project_pal(ev, actor = "G01", predict_time = as.Date("2010-12-01"), params = p)
+  actor       time      lon      lat n_focal n_alter has_history
+1   G01 2010-12-01 6.607155 10.12998      54     128        TRUE
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("project_pals")
+> ### * project_pals
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: project_pals
+> ### Title: Project locations for multiple actors
+> ### Aliases: project_pals
+> 
+> ### ** Examples
+> 
+> ev <- simulate_conflict_events(n_actors = 10, n_events = 300, seed = 1)
+> p  <- pals_params(alpha = 0.9, beta = 0.2, gamma = -10, eta = -10)
+> pal <- project_pals(ev, predict_time = as.Date("2010-12-01"), params = p)
+> head(pal)
+  actor       time       lon       lat n_focal n_alter has_history
+1   G01 2010-12-01  9.306356  8.308164      68     187        TRUE
+2   G02 2010-12-01  8.073719  7.316780      45     182        TRUE
+3   G03 2010-12-01  8.958631  9.924148      21     187        TRUE
+4   G04 2010-12-01 10.502588  6.782979       4     130        TRUE
+5   G05 2010-12-01  7.655026 11.563868      42     186        TRUE
+6   G06 2010-12-01 12.392800  8.977235      32     163        TRUE
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("simulate_conflict_events")
+> ### * simulate_conflict_events
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: simulate_conflict_events
+> ### Title: Simulate dyadic conflict events between moving actors
+> ### Aliases: simulate_conflict_events
+> 
+> ### ** Examples
+> 
+> ev <- simulate_conflict_events(n_actors = 12, n_events = 400, seed = 42)
+> ev
+<pal_events>
+  events: 400
+  actors: 12
+  time:   2000-01-02 to 2016-12-25
+  bbox:   lon [4.21, 14.70], lat [4.00, 13.90]
+> summary(ev)
+<pal_events> summary
+  400 events, 12 actors, 2000-01-02 to 2016-12-25
+  events per actor: min 16, median 64, max 108
+> 
+> 
+> 
+> 
+> ### * <FOOTER>
+> ###
+> cleanEx()
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  2.386 0.744 3.272 0 0 
+> grDevices::dev.off()
+null device 
+          1 
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')

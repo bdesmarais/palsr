@@ -1,7 +1,7 @@
 ---
 title: "Projecting actor locations and modeling dyadic interactions with PALS"
 output: rmarkdown::html_vignette
-bibliography: pals.bib
+bibliography: palsr.bib
 vignette: >
   %\VignetteIndexEntry{Projecting actor locations and modeling dyadic interactions with PALS}
   %\VignetteEngine{knitr::rmarkdown}
@@ -29,7 +29,7 @@ projecting where a mobile actor "is" at any moment from the spatiotemporal
 history of its past interactions, using exponential-smoothing weights that
 favour recent and nearby events.
 
-The `pals` package implements the full workflow:
+The `palsr` package implements the full workflow:
 
 1. build a validated table of dyadic events (`pal_events()`);
 2. estimate the smoothing parameters by minimizing great-circle prediction
@@ -41,7 +41,7 @@ The `pals` package implements the full workflow:
    Rules (`bootstrap_pals()`, `pool_rubin()`).
 
 ```{r load}
-library(pals)
+library(palsr)
 ```
 
 ## The method in brief
