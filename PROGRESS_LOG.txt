@@ -48,3 +48,25 @@ PLAN FOR THIS SESSION:
 - Regenerated roxygen docs: NAMESPACE now exports bootstrap_pals, pool_rubin; added
   bootstrap_pals.Rd, pool_rubin.Rd, nigeria_sim.Rd. Fixed [pals_fit] doc link.
 - Committed bootstrap + data + regenerated docs; pushed core commit to origin.
+
+- Wrote full testthat suite (tests/testthat/): events, params, distance, project
+  (incl. C++-vs-R kernel agreement), estimate, simulate, bootstrap/pool_rubin.
+  All tests pass via devtools::test().
+- Wrote vignette vignettes/pals.Rmd (+ pals.bib); renders cleanly with bundled pandoc.
+- Wrote README.md (install, method table, quick start, uncertainty, citation).
+- Added NEWS.md, .Rbuildignore (excludes design docs/data-raw/paper/.github),
+  and .github/workflows/R-CMD-check.yaml (r-lib multi-OS matrix).
+- Wrote JOSS paper paper/paper.md (~790 words: summary, statement of need,
+  method, key features, example) + paper/paper.bib.
+  NOTE FOR AUTHORS: add real ORCIDs and confirm affiliations before JOSS submission.
+- Built pals_0.1.0.tar.gz; running R CMD check --as-cran with
+  _R_CHECK_FORCE_SUGGESTS_=false. Committing + pushing after each step.
+
+- R CMD check --as-cran result: 1 WARNING (CRAN name clash: an unrelated CRAN
+  package 'pals' = color palettes by K. Wright already exists; only matters if
+  targeting CRAN, not JOSS) + 4 NOTEs.
+  Fixed NOTEs: importFrom(stats, coef); moved ggplot2 Imports->Suggests (only used
+  in vignette); LICENSE.md added to .Rbuildignore. Remaining NOTEs are purely
+  environmental (no system pandoc on PATH for check subprocess; HTML Tidy/V8
+  absent) and are clean on the GitHub Actions CI.
+- Re-running plain R CMD check after fixes.

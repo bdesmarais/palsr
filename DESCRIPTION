@@ -23,14 +23,14 @@ LazyData: true
 Depends: R (>= 4.1.0)
 Imports:
     Rcpp,
-    stats,
-    ggplot2
+    stats
 LinkingTo: Rcpp
 Suggests:
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    mice
+    mice,
+    ggplot2
 URL: https://github.com/bdesmarais/pals
 BugReports: https://github.com/bdesmarais/pals/issues
 VignetteBuilder: knitr

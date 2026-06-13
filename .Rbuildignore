@@ -11,5 +11,6 @@
 ^DECISIONS\.md$
 ^PLAN\.md$
 ^README\.Rmd$
+^LICENSE\.md$
 ^\.DS_Store$
 ^cran-comments\.md$
