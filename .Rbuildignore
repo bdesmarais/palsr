@@ -1,0 +1,15 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.Renviron$
+^\.github$
+^data-raw$
+^docs-research$
+^paper$
+^PROGRESS_LOG\.txt$
+^ALGORITHM\.md$
+^DESIGN\.md$
+^DECISIONS\.md$
+^PLAN\.md$
+^README\.Rmd$
+^\.DS_Store$
+^cran-comments\.md$
