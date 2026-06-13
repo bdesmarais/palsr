@@ -1,0 +1,186 @@
+---
+title: "Projecting actor locations and modeling dyadic interactions with PALS"
+output: rmarkdown::html_vignette
+bibliography: pals.bib
+vignette: >
+  %\VignetteIndexEntry{Projecting actor locations and modeling dyadic interactions with PALS}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4.5,
+  dpi = 96
+)
+set.seed(1)
+```
+
+## Overview
+
+Many actors in the social world --- armed groups, firms, diplomats, migrating
+populations --- have no fixed location. They move through space over time, and
+*where* two such actors interact is itself an outcome worth modeling. The
+**Projected Actor Location (PALS)** method [@kim2023pals] addresses this by
+projecting where a mobile actor "is" at any moment from the spatiotemporal
+history of its past interactions, using exponential-smoothing weights that
+favour recent and nearby events.
+
+The `pals` package implements the full workflow:
+
+1. build a validated table of dyadic events (`pal_events()`);
+2. estimate the smoothing parameters by minimizing great-circle prediction
+   error (`estimate_pals()`);
+3. project actor locations at arbitrary times (`project_pals()`);
+4. predict dyadic interaction locations and build distance covariates
+   (`predict_event_locations()`, `pal_distance()`);
+5. quantify uncertainty with a nonparametric bootstrap and pool with Rubin's
+   Rules (`bootstrap_pals()`, `pool_rubin()`).
+
+```{r load}
+library(pals)
+```
+
+## The method in brief
+
+For a focal actor $i$ at prediction time $t$, PALS forms a recency-weighted
+mean of the locations of $i$'s own past events (the *focal* component) and a
+recency-weighted mean of the locations of events involving $i$'s past
+interaction partners, or *alters* (the *alter* component). The projected
+location is a convex combination of the two,
+$$
+g_i(t) = (1-\pi)\sum_e W_i(e)\, g(e) \;+\; \pi \sum_e W_k(e)\, g(e),
+\qquad \pi = \mathrm{logistic}(\gamma + \eta\, v),
+$$
+where the weights decay with event age --- $W_i(e) \propto (\text{age}^{\alpha})^{-1}$
+for the focal actor and analogously with $\beta$ for the alters --- and the
+mixing weight $\pi$ depends on how active the focal actor is relative to its
+alters through the event-count ratio $v$. The four parameters are therefore:
+
+| Parameter | Role |
+|-----------|------|
+| $\alpha$  | decay of the focal actor's own history |
+| $\beta$   | decay of the alters' histories |
+| $\gamma$  | intercept of the focal-vs-alter mixing weight |
+| $\eta$    | dependence of the mixing weight on relative activity |
+
+A reduced **one-parameter** model fixes $\pi = 0$ (focal history only) and
+estimates $\alpha$ alone; it is fast and surprisingly competitive.
+
+## A worked example
+
+The package ships a deterministic simulated dataset, `nigeria_sim`, of 1,500
+dyadic conflict events among 25 mobile actors between 2000 and 2016. (The
+original application uses ACLED data, which are not redistributable.)
+
+```{r data}
+data(nigeria_sim)
+nigeria_sim
+summary(nigeria_sim)
+```
+
+You can build your own `pal_events` object from any data frame by naming the
+actor, time, longitude and latitude columns:
+
+```{r build}
+raw <- data.frame(
+  from = c("A", "A", "B"),
+  to   = c("B", "C", "C"),
+  when = as.Date(c("2001-01-01", "2001-06-01", "2002-01-01")),
+  x    = c(7.1, 8.0, 7.5),
+  y    = c(9.0, 9.4, 10.1)
+)
+pal_events(raw, actor1 = "from", actor2 = "to",
+           time = "when", lon = "x", lat = "y")
+```
+
+### Estimating the parameters
+
+Estimation marches forward through time: every event is predicted using only
+events strictly earlier than it, and the parameters minimize the mean
+great-circle (Haversine) distance between predicted and observed locations.
+
+```{r fit-one}
+fit1 <- estimate_pals(nigeria_sim, model = "one")
+fit1
+coef(fit1)
+```
+
+The full four-parameter model adds the alter component. We cap the optimizer
+iterations here purely to keep the vignette quick:
+
+```{r fit-four}
+fit4 <- estimate_pals(nigeria_sim, model = "four",
+                      control = list(maxit = 60))
+coef(fit4)
+```
+
+### Projecting actor locations
+
+With a fitted model (or a hand-specified `pals_params()`), project where each
+actor is at a given time:
+
+```{r project}
+pal_2015 <- project_pals(nigeria_sim,
+                         predict_time = as.Date("2015-01-01"),
+                         params = fit1)
+head(pal_2015)
+```
+
+```{r map, fig.alt = "Projected actor locations on 2015-01-01"}
+library(ggplot2)
+ggplot(pal_2015, aes(lon, lat)) +
+  geom_point(colour = "#2b6cb0", size = 2) +
+  geom_text(aes(label = actor), vjust = -0.8, size = 3) +
+  labs(title = "Projected actor locations, 2015-01-01",
+       x = "Longitude", y = "Latitude") +
+  theme_minimal()
+```
+
+### Predicting interaction locations and dyadic distances
+
+The predicted location of an interaction between two actors is the mean of
+their two projected locations. Supplying observed coordinates scores the
+prediction in kilometres:
+
+```{r predict-events}
+targets <- nigeria_sim[nigeria_sim$time > as.Date("2014-01-01"), ]
+scored  <- predict_event_locations(nigeria_sim, targets, fit1)
+summary(scored$error_km)
+```
+
+The dyadic distance between two actors' projected locations is the key
+covariate for modeling who interacts with whom:
+
+```{r distance}
+dyads <- data.frame(actor1 = "G01", actor2 = "G02",
+                    time = as.Date("2014-06-01"))
+pal_distance(nigeria_sim, dyads, fit1, transform = "log")
+```
+
+## Uncertainty: bootstrap and Rubin's Rules
+
+`bootstrap_pals()` resamples events with replacement and re-estimates the model
+on each replicate, yielding bootstrap standard errors and percentile intervals.
+(We use a small number of replicates here for speed; the paper uses ten.)
+
+```{r bootstrap}
+bt <- bootstrap_pals(nigeria_sim, R = 10, model = "one", seed = 1)
+summary(bt)
+```
+
+When a downstream estimand (say, a regression coefficient using PAL distances)
+is computed on each replicate, treat the replicates as multiple imputations and
+combine them with Rubin's Rules, which propagate both within- and
+between-replicate uncertainty:
+
+```{r rubin}
+q <- c(1.10, 0.95, 1.20, 1.05, 0.98)   # per-replicate estimates
+u <- c(0.04, 0.05, 0.045, 0.038, 0.052) # per-replicate variances
+pool_rubin(q, u, df = TRUE, dfcom = 100)
+```
+
+## References
