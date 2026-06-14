@@ -23,13 +23,14 @@ haversine <- function(lon1, lat1, lon2, lat2, radius = 6371.0088) {
 
 #' @noRd
 # Compute a PAL for each unique (actor, time) pair; return a named-lookup data.frame.
-.pal_lookup <- function(events, actor, time, p, legacy = FALSE, eps = 0.01) {
+.pal_lookup <- function(events, actor, time, p, legacy = FALSE, eps = 0.01, cutoff = "day") {
   key <- paste(actor, as.character(time), sep = "\r")
   uk <- !duplicated(key)
   ua <- actor[uk]; ut <- time[uk]; ukey <- key[uk]
   lon <- numeric(length(ukey)); lat <- numeric(length(ukey))
   for (i in seq_along(ukey)) {
-    o <- .project_actor_time(events, ua[i], ut[i], p, alter_legacy = legacy, eps = eps)
+    o <- .project_actor_time(events, ua[i], ut[i], p, alter_legacy = legacy, eps = eps,
+                             cutoff = cutoff)
     lon[i] <- o[[1]]; lat[i] <- o[[2]]
   }
   idx <- match(key, ukey)
@@ -46,7 +47,7 @@ haversine <- function(lon1, lat1, lon2, lat2, radius = 6371.0088) {
 #' @param targets A `data.frame` with columns `actor1`, `actor2`, `time`, and optionally
 #'   `lon`/`lat` giving the observed event location (for error scoring).
 #' @param params A [pals_params] or fitted [estimate_pals] object.
-#' @param alter_weight,eps See [project_pal].
+#' @param alter_weight,eps,cutoff See [project_pal].
 #'
 #' @return `targets` augmented with `pred_lon`, `pred_lat`, and (if observed `lon`/`lat`
 #'   were supplied) `error_km`, the Haversine distance between predicted and observed
@@ -61,15 +62,16 @@ haversine <- function(lon1, lat1, lon2, lat2, radius = 6371.0088) {
 #' @export
 predict_event_locations <- function(events, targets, params,
                                      alter_weight = c("normalized", "legacy"),
-                                     eps = 0.01) {
+                                     eps = 0.01, cutoff = c("day", "month", "year")) {
   stopifnot(inherits(events, "pal_events"))
   alter_weight <- match.arg(alter_weight)
+  cutoff <- match.arg(cutoff)
   p <- as_pals_params(params)
   legacy <- identical(alter_weight, "legacy")
   tm <- .as_date(targets$time)
 
-  a <- .pal_lookup(events, targets$actor1, tm, p, legacy, eps)
-  b <- .pal_lookup(events, targets$actor2, tm, p, legacy, eps)
+  a <- .pal_lookup(events, targets$actor1, tm, p, legacy, eps, cutoff)
+  b <- .pal_lookup(events, targets$actor2, tm, p, legacy, eps, cutoff)
 
   # mean of the two PALs, na.rm = TRUE (fall back to the available one)
   pred_lon <- .rowmean2(a$lon, b$lon)
@@ -101,7 +103,7 @@ predict_event_locations <- function(events, targets, params,
 #' @param transform `"none"` (default) returns distance in km; `"log"` returns
 #'   `log(distance + offset)`, as used for interstate-conflict-style specifications.
 #' @param offset Offset added before logging (default `0.01`).
-#' @param alter_weight,eps See [project_pal].
+#' @param alter_weight,eps,cutoff See [project_pal].
 #'
 #' @return `dyads` augmented with `pal_distance` (and, for `transform = "log"`,
 #'   `pal_log_distance`).
@@ -116,16 +118,18 @@ predict_event_locations <- function(events, targets, params,
 #' @export
 pal_distance <- function(events, dyads, params,
                          transform = c("none", "log"), offset = 0.01,
-                         alter_weight = c("normalized", "legacy"), eps = 0.01) {
+                         alter_weight = c("normalized", "legacy"), eps = 0.01,
+                         cutoff = c("day", "month", "year")) {
   stopifnot(inherits(events, "pal_events"))
   transform <- match.arg(transform)
   alter_weight <- match.arg(alter_weight)
+  cutoff <- match.arg(cutoff)
   p <- as_pals_params(params)
   legacy <- identical(alter_weight, "legacy")
   tm <- .as_date(dyads$time)
 
-  a <- .pal_lookup(events, dyads$actor1, tm, p, legacy, eps)
-  b <- .pal_lookup(events, dyads$actor2, tm, p, legacy, eps)
+  a <- .pal_lookup(events, dyads$actor1, tm, p, legacy, eps, cutoff)
+  b <- .pal_lookup(events, dyads$actor2, tm, p, legacy, eps, cutoff)
   d <- haversine(a$lon, a$lat, b$lon, b$lat)
 
   out <- dyads

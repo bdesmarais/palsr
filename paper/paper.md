@@ -8,19 +8,19 @@ tags:
   - dyadic data
   - exponential smoothing
 authors:
+  - name: Sangyeon Kim
+    affiliation: 1
+  - name: Howard Liu
+    affiliation: 2
   - name: Bruce A. Desmarais
     corresponding: true
-    affiliation: 1
-  - name: Sangyeon Kim
-    affiliation: 2
-  - name: Howard Liu
     affiliation: 3
 affiliations:
-  - name: Department of Political Science, Pennsylvania State University, USA
+  - name: Division of Communication and Media, Ewha Womans University, Republic of Korea
     index: 1
-  - name: Pennsylvania State University, USA
+  - name: Department of Political Science, University of South Carolina, USA
     index: 2
-  - name: University of Southern Denmark, Denmark
+  - name: Department of Political Science, Pennsylvania State University, USA
     index: 3
 date: 13 June 2026
 bibliography: paper.bib

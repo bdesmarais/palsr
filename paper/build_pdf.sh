@@ -30,7 +30,7 @@ COMMON_OPTS=(
   -V graphics=true
   -V logo_path=".joss/logo.png"
   -V year=2026
-  -V citation_author="Desmarais et al."
+  -V citation_author="Kim et al."
   -V volume="VV" -V issue="II" -V page="NNNN"
   -V submitted="13 June 2026" -V published="13 June 2026"
   -V review_issue_url="https://github.com/openjournals/joss-reviews/issues/XXXX"

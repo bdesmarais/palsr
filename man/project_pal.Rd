@@ -10,7 +10,8 @@ project_pal(
   predict_time,
   params,
   alter_weight = c("normalized", "legacy"),
-  eps = 0.01
+  eps = 0.01,
+  cutoff = c("day", "month", "year")
 )
 }
 \arguments{
@@ -28,6 +29,11 @@ weights; \code{"legacy"} reproduces the original replication code (an un-normali
 of alter coordinates). See \code{DECISIONS.md}.}
 
 \item{eps}{Numerical offset inside each age weight (default \code{0.01}).}
+
+\item{cutoff}{History granularity: \code{"day"} (default) uses events strictly before
+\code{predict_time}; \code{"month"} uses events before the 1st of that month; \code{"year"} uses
+events before Jan 1 of that year (the source's Dec-1 yearly convention). Ages are
+always measured from \code{predict_time}.}
 }
 \value{
 A \code{data.frame} with one row per prediction time and columns \code{actor}, \code{time},

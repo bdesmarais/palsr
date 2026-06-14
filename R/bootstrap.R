@@ -73,10 +73,7 @@ bootstrap_pals <- function(events, R = 50, model = c("four", "one"),
     class(bev) <- c("pal_events", "data.frame")
 
     fit <- tryCatch(estimate_pals(bev, model = model, ...), error = function(e) NULL)
-    if (is.null(fit)) {
-      est_list[[r]] <- NULL
-      next
-    }
+    if (is.null(fit)) next   # leave the preallocated NULL; dropped by the filter below
     cf <- coef(fit)
     est_list[[r]] <- data.frame(
       replicate = r, as.list(cf),
@@ -90,7 +87,7 @@ bootstrap_pals <- function(events, R = 50, model = c("four", "one"),
       pj <- project_pals(events, actors = actors, predict_time = predict_time,
                          params = fit$params,
                          alter_weight = point$settings$alter_weight,
-                         eps = point$settings$eps)
+                         eps = point$settings$eps, cutoff = point$settings$cutoff)
       pj$replicate <- r
       proj_list[[r]] <- pj
     }

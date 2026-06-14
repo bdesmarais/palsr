@@ -11,7 +11,8 @@ pal_distance(
   transform = c("none", "log"),
   offset = 0.01,
   alter_weight = c("normalized", "legacy"),
-  eps = 0.01
+  eps = 0.01,
+  cutoff = c("day", "month", "year")
 )
 }
 \arguments{
@@ -26,7 +27,7 @@ pal_distance(
 
 \item{offset}{Offset added before logging (default \code{0.01}).}
 
-\item{alter_weight, eps}{See \link{project_pal}.}
+\item{alter_weight, eps, cutoff}{See \link{project_pal}.}
 }
 \value{
 \code{dyads} augmented with \code{pal_distance} (and, for \code{transform = "log"},

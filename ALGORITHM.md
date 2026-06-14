@@ -24,8 +24,10 @@ Derived quantities (computed internally, never asked of the user):
   `i == actor1` or `i == actor2`. Call this `E_i(t)`.
 - **Alters** of `i` (through time `t`): the set of distinct actors that share at least
   one event with `i` (i.e. the other actor in any of `i`'s events with `time < t`).
-- **Alter history** `E_k(t)`: all events with `time < t` involving *any* alter of `i`
-  (counted with multiplicity — total events across all alters, not distinct partners).
+- **Alter history** `E_k(t)`: the **distinct** events with `time < t` that involve *any*
+  alter of `i` — each such event counted **once**, however many of `i`'s alters it
+  involves. (The Dataverse code loops per partner and so counts an event between two
+  alters twice; the package counts it once by design — see `DECISIONS.md` #14.)
 
 `a(e) = (t - time(e))` measured in **days** (the smoothing timescale). The prediction
 time `t` defaults, in the yearly workflow, to **December 1 of the target year**, but is
@@ -81,7 +83,8 @@ g_i(t) = (1 - pi) * sum_e W_i(e) g(e)  +  pi * sum_e W_k(e) g(e)
 - **Duplicate events** (from bootstrap): treated as ordinary repeated events; no dedup.
 - **Shared dyadic events**: an event involving `i` also appears in `E_i`; events
   involving `i`'s alters (possibly including events `i` also attended) appear in `E_k`.
-  No de-duplication across the two sets (matches source code).
+  No de-duplication *across* the two sets. *Within* `E_k`, an event involving two alters
+  is counted once (the source counts it per-alter; deliberate change — `DECISIONS.md` #14).
 
 ### Alter-weight normalization (the one substantive correction)
 The released code line `weights_k <- 1/(sum(weights_k))` overwrites the alter weight
@@ -153,8 +156,10 @@ offers the df correction.
 ## 6. What the package deliberately generalizes
 
 - `predict_time` is a free argument (source code fixes Dec-1).
-- Estimation works on any user-supplied set of fit events / time windows; a helper
-  reproduces the yearly marching-forward protocol.
+- Estimation works on any user-supplied set of fit events / time windows. A
+  `cutoff = c("day","month","year")` argument sets the history boundary: `"day"` (default)
+  = strict date; `"year"` reproduces the source's calendar-year convention (events before
+  Jan 1 of the prediction year). Ages are always measured from `predict_time`.
 - Alter-weight normalization corrected by default (`legacy` available).
 - Objective is mean-km by default; `aggregate = "sum"` available.
 - The downstream AMEN network model and the Nigeria-specific missing-distance

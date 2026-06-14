@@ -24,9 +24,14 @@ Numbered decisions, each with the question, the choice, and why. Referenced from
 4. **Positivity of alpha/beta.** → Optimize on **log scale** (`alpha=exp(.)`), exactly as
    the source code, so no box constraints are needed and estimates match.
 
-5. **Prediction date.** Source fixes Dec-1 of the target year. → **Expose `predict_time`
-   as a free argument**; provide `estimate_pals_yearly()` that reproduces the Dec-1
-   marching-forward convention. *Why:* generality without losing replicability.
+5. **Prediction date + history cutoff.** Source fixes Dec-1 of the target year and
+   truncates history at the calendar-year boundary (`filter(YEAR <= year-1)`). → **Expose
+   `predict_time` as a free argument** plus a **`cutoff = c("day","month","year")`** option
+   on the history filter: `"day"` (default) = events strictly before `predict_time`;
+   `"year"` = events before Jan 1 of the prediction year, reproducing the source's
+   convention (verified to machine precision against the Dataverse `actorYearDF` outputs,
+   571/571 actor-years). *Why:* generality without losing replicability; `cutoff` subsumes
+   the originally-planned `estimate_pals_yearly()` helper.
 
 6. **Package name collision.** CRAN has an unrelated `pals` (colour palettes). → **Keep
    `pals`** per the project brief; JOSS does not require CRAN. Documented prominently.
@@ -48,6 +53,9 @@ Numbered decisions, each with the question, the choice, and why. Referenced from
     6371.0088 km) instead of depending on `geosphere`. *Why:* it is the hot inner loop of
     estimation/covariate building; a tiny compiled kernel keeps deps light and is the
     package's substantive compiled contribution. A pure-R reference is kept for tests.
+    (Source scored with `geosphere::distHaversine`, default radius 6378.137 km; our mean
+    radius shifts reported distances ~0.11%, but as a constant scale on the objective it
+    leaves the estimated parameters unchanged. Pass `radius=6378.137` to match exactly.)
 
 11. **Scope: AMEN + Nigeria covariate plumbing.** The downstream AMEN network model and
     the bespoke missing-distance regression imputation are **not re-implemented** in the
@@ -65,3 +73,19 @@ Numbered decisions, each with the question, the choice, and why. Referenced from
     `T=W+(1+1/m)B` plus optional Barnard–Rubin df. *Why:* exact replication by default,
     with a more complete option for general use; cross-checked against `mice::pool` in a
     (suggested-pkg-guarded) test.
+
+14. **Alter-event multiplicity.** The Dataverse code builds the alter history with a
+    per-partner loop, so an event between two of the focal actor's alters is appended
+    **twice** (once per partner). → The package counts each qualifying event **once** (a
+    set filter over events involving any alter). *Why:* an event shouldn't be weighted up
+    merely because two of your partners both attended it; the single-count is the cleaner,
+    intended behavior. Numerically moot in the application (`pi≈0`); a deliberate
+    divergence, now described accurately in `ALGORITHM.md`.
+
+15. **Dyadic-prediction NA handling.** Source computes the event prediction as
+    `rowMeans(cbind(PAL_A, PAL_B))` with `na.rm=FALSE`, so an event is **dropped** when
+    *either* actor lacks history. → The package uses `na.rm=TRUE`, falling back to the one
+    available PAL (so it predicts one-sided-history events the source drops). *Why:* a
+    one-sided projection is still informative and increases coverage. Documented so the
+    scored-event set / reported distances are understood to differ from the source; a
+    `dyad_na="drop"` switch for byte-exact replication is a one-line add if wanted.

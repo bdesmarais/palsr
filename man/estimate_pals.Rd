@@ -14,6 +14,7 @@ estimate_pals(
   alter_weight = c("normalized", "legacy"),
   eps = 0.01,
   radius = 6371.0088,
+  cutoff = c("day", "month", "year"),
   control = list()
 )
 }
@@ -36,7 +37,7 @@ four-parameter model, \code{"Brent"} for the one-parameter model by default).}
 
 \item{aggregate}{\code{"mean"} (default) or \code{"sum"} of per-event distances.}
 
-\item{alter_weight, eps}{See \link{project_pal}.}
+\item{alter_weight, eps, cutoff}{See \link{project_pal}.}
 
 \item{radius}{Sphere radius for the Haversine objective (km).}
 

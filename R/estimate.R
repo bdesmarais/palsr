@@ -3,7 +3,7 @@
 #' @noRd
 # Pre-extract and flatten the focal/alter histories for both actors of every target,
 # so the optimizer objective is a single compiled call per evaluation.
-.build_units <- function(events, targets) {
+.build_units <- function(events, targets, cutoff = "day") {
   n <- nrow(targets)
   actor <- c(targets$actor1, targets$actor2)        # 2n: first n = side A
   time  <- rep(.as_date(targets$time), 2L)
@@ -13,7 +13,7 @@
   parts <- strsplit(uk, "\r", fixed = TRUE)
   hists <- vector("list", length(uk))
   for (i in seq_along(uk)) {
-    hists[[i]] <- .history(events, parts[[i]][1], as.Date(parts[[i]][2]))
+    hists[[i]] <- .history(events, parts[[i]][1], as.Date(parts[[i]][2]), cutoff)
   }
   idx <- match(key, uk)
 
@@ -82,7 +82,7 @@
 #' @param method Optimizer method passed to [stats::optim] (`"Nelder-Mead"` for the
 #'   four-parameter model, `"Brent"` for the one-parameter model by default).
 #' @param aggregate `"mean"` (default) or `"sum"` of per-event distances.
-#' @param alter_weight,eps See [project_pal].
+#' @param alter_weight,eps,cutoff See [project_pal].
 #' @param radius Sphere radius for the Haversine objective (km).
 #' @param control A list of control parameters for [stats::optim].
 #'
@@ -107,11 +107,13 @@ estimate_pals <- function(events, fit_events = NULL,
                           aggregate = c("mean", "sum"),
                           alter_weight = c("normalized", "legacy"),
                           eps = 0.01, radius = 6371.0088,
+                          cutoff = c("day", "month", "year"),
                           control = list()) {
   stopifnot(inherits(events, "pal_events"))
   model <- match.arg(model)
   aggregate <- match.arg(aggregate)
   alter_weight <- match.arg(alter_weight)
+  cutoff <- match.arg(cutoff)
   legacy <- identical(alter_weight, "legacy")
   if (is.null(fit_events)) fit_events <- events
   need <- c("actor1", "actor2", "time", "lon", "lat")
@@ -119,7 +121,7 @@ estimate_pals <- function(events, fit_events = NULL,
     stop("`fit_events` must contain columns: ", paste(need, collapse = ", "),
          call. = FALSE)
 
-  units <- .build_units(events, fit_events)
+  units <- .build_units(events, fit_events, cutoff)
 
   obj <- function(theta)
     .objective(theta, units, model, legacy, eps, radius, aggregate)
@@ -146,15 +148,16 @@ estimate_pals <- function(events, fit_events = NULL,
                          pi_zero = (model == "one"), alter_legacy = legacy, eps = eps)
   n <- units$n
   predlon <- .rowmean2(M[seq_len(n), 1], M[n + seq_len(n), 1])
+  predlat <- .rowmean2(M[seq_len(n), 2], M[n + seq_len(n), 2])
   n_used <- sum(!is.na(haversine_cpp(units$obs_lon, units$obs_lat,
-                                     predlon, predlon, radius)))
+                                     predlon, predlat, radius)))
 
   structure(
     list(params = params, model = model, objective = op$value,
          n_used = n_used, convergence = op$convergence, optim = op,
          events = events,
          settings = list(alter_weight = alter_weight, eps = eps,
-                         radius = radius, aggregate = aggregate),
+                         radius = radius, aggregate = aggregate, cutoff = cutoff),
          call = match.call()),
     class = "pals_fit"
   )
@@ -211,15 +214,16 @@ predict.pals_fit <- function(object, newdata = NULL, predict_time = NULL,
   type <- match.arg(type)
   events <- if (is.null(newdata) || identical(type, "event")) object$events else newdata
   aw <- object$settings$alter_weight; eps <- object$settings$eps
+  ct <- if (is.null(object$settings$cutoff)) "day" else object$settings$cutoff
   if (type == "pal") {
     if (is.null(predict_time))
       stop("Provide `predict_time` for type = 'pal'.", call. = FALSE)
     ev <- if (inherits(newdata, "pal_events")) newdata else object$events
     project_pals(ev, actors = actors, predict_time = predict_time,
-                 params = object$params, alter_weight = aw, eps = eps)
+                 params = object$params, alter_weight = aw, eps = eps, cutoff = ct)
   } else {
     targets <- if (is.null(newdata)) object$events else newdata
     predict_event_locations(object$events, targets, object$params,
-                            alter_weight = aw, eps = eps)
+                            alter_weight = aw, eps = eps, cutoff = ct)
   }
 }

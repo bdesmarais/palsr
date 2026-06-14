@@ -1,9 +1,21 @@
 # Projection ---------------------------------------------------------------------
 
 #' @noRd
-# Extract the focal and alter event histories for one actor strictly before a time.
-.history <- function(events, actor, predict_time) {
-  before <- events$time < predict_time
+# Exclusive history cutoff: truncate the prediction time to the start of its day,
+# month, or year. "day" keeps the exact strict-date behavior (events before the date).
+.cutoff_time <- function(predict_time, cutoff = c("day", "month", "year")) {
+  cutoff <- match.arg(cutoff)
+  if (cutoff == "day")   return(predict_time)
+  if (cutoff == "month") return(as.Date(format(predict_time, "%Y-%m-01")))
+  as.Date(format(predict_time, "%Y-01-01"))                       # "year"
+}
+
+#' @noRd
+# Extract the focal and alter event histories for one actor before the cutoff implied
+# by `predict_time` and `cutoff` (day = strict date; month/year = calendar boundary).
+# Ages are always measured from `predict_time` itself, regardless of `cutoff`.
+.history <- function(events, actor, predict_time, cutoff = "day") {
+  before <- events$time < .cutoff_time(predict_time, cutoff)
   is_focal <- before & (events$actor1 == actor | events$actor2 == actor)
   foc <- events[is_focal, , drop = FALSE]
 
@@ -57,8 +69,8 @@ project_one_r <- function(h, alpha, beta, gamma, eta,
 
 #' @noRd
 .project_actor_time <- function(events, actor, predict_time, p,
-                                alter_legacy = FALSE, eps = 0.01) {
-  h <- .history(events, actor, predict_time)
+                                alter_legacy = FALSE, eps = 0.01, cutoff = "day") {
+  h <- .history(events, actor, predict_time, cutoff)
   out <- project_one_cpp(h$focal_age, h$focal_lon, h$focal_lat,
                          h$alter_age, h$alter_lon, h$alter_lat,
                          alpha = p$alpha, beta = p$beta,
@@ -82,6 +94,10 @@ project_one_r <- function(h, alpha, beta, gamma, eta,
 #'   weights; `"legacy"` reproduces the original replication code (an un-normalized sum
 #'   of alter coordinates). See `DECISIONS.md`.
 #' @param eps Numerical offset inside each age weight (default `0.01`).
+#' @param cutoff History granularity: `"day"` (default) uses events strictly before
+#'   `predict_time`; `"month"` uses events before the 1st of that month; `"year"` uses
+#'   events before Jan 1 of that year (the source's Dec-1 yearly convention). Ages are
+#'   always measured from `predict_time`.
 #'
 #' @return A `data.frame` with one row per prediction time and columns `actor`, `time`,
 #'   `lon`, `lat`, `n_focal`, `n_alter`, `has_history`. `lon`/`lat` are `NA` when the
@@ -94,15 +110,18 @@ project_one_r <- function(h, alpha, beta, gamma, eta,
 #'
 #' @export
 project_pal <- function(events, actor, predict_time, params,
-                        alter_weight = c("normalized", "legacy"), eps = 0.01) {
+                        alter_weight = c("normalized", "legacy"), eps = 0.01,
+                        cutoff = c("day", "month", "year")) {
   stopifnot(inherits(events, "pal_events"))
   alter_weight <- match.arg(alter_weight)
+  cutoff <- match.arg(cutoff)
   p <- as_pals_params(params)
   predict_time <- .as_date(predict_time)
   legacy <- identical(alter_weight, "legacy")
 
   rows <- lapply(predict_time, function(tt) {
-    o <- .project_actor_time(events, actor, tt, p, alter_legacy = legacy, eps = eps)
+    o <- .project_actor_time(events, actor, tt, p, alter_legacy = legacy, eps = eps,
+                             cutoff = cutoff)
     data.frame(actor = actor, time = tt,
                lon = o[[1]], lat = o[[2]],
                n_focal = o[[3]], n_alter = o[[4]],
@@ -134,13 +153,15 @@ project_pal <- function(events, actor, predict_time, params,
 #'
 #' @export
 project_pals <- function(events, actors = NULL, predict_time, params,
-                         alter_weight = c("normalized", "legacy"), eps = 0.01) {
+                         alter_weight = c("normalized", "legacy"), eps = 0.01,
+                         cutoff = c("day", "month", "year")) {
   stopifnot(inherits(events, "pal_events"))
   alter_weight <- match.arg(alter_weight)
+  cutoff <- match.arg(cutoff)
   if (is.null(actors)) actors <- .actors(events)
   parts <- lapply(actors, function(a)
     project_pal(events, a, predict_time, params,
-                alter_weight = alter_weight, eps = eps))
+                alter_weight = alter_weight, eps = eps, cutoff = cutoff))
   out <- do.call(rbind, parts)
   out <- out[order(out$time, out$actor), , drop = FALSE]
   rownames(out) <- NULL

@@ -9,7 +9,8 @@ predict_event_locations(
   targets,
   params,
   alter_weight = c("normalized", "legacy"),
-  eps = 0.01
+  eps = 0.01,
+  cutoff = c("day", "month", "year")
 )
 }
 \arguments{
@@ -20,7 +21,7 @@ predict_event_locations(
 
 \item{params}{A \link{pals_params} or fitted \link{estimate_pals} object.}
 
-\item{alter_weight, eps}{See \link{project_pal}.}
+\item{alter_weight, eps, cutoff}{See \link{project_pal}.}
 }
 \value{
 \code{targets} augmented with \code{pred_lon}, \code{pred_lat}, and (if observed \code{lon}/\code{lat}
