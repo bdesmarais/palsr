@@ -29,3 +29,34 @@
 #' fit <- estimate_pals(nigeria_sim, model = "one")
 #' coef(fit)
 "nigeria_sim"
+
+#' Subnational conflict events in Nigeria (ACLED)
+#'
+#' Real dyadic conflict events from the Armed Conflict Location and Event Data project
+#' (ACLED) for Nigeria, as used in Kim, Liu and Desmarais (2023). Each row is a recorded
+#' interaction between two actors at a known date and location; this is the data the PALS
+#' method was developed and validated on.
+#'
+#' @format A [pal_events] object (a `data.frame` subclass) with 1,549 rows and 5 columns:
+#' \describe{
+#'   \item{actor1}{Character name of the first actor in the dyad.}
+#'   \item{actor2}{Character name of the second actor in the dyad.}
+#'   \item{time}{`Date` of the event.}
+#'   \item{lon}{Event longitude (decimal degrees).}
+#'   \item{lat}{Event latitude (decimal degrees).}
+#' }
+#'
+#' @source Armed Conflict Location and Event Data project (ACLED), via the replication
+#'   archive for Kim, Liu and Desmarais (2023), Harvard Dataverse,
+#'   \doi{10.7910/DVN/NLWWPE}. ACLED data are subject to ACLED's terms of use.
+#'
+#' @references Kim, S., Liu, H., and Desmarais, B. A. (2023). Spatial modeling of dyadic
+#'   geopolitical interactions between moving actors. *Political Science Research and
+#'   Methods*, 11(3), 633-644. \doi{10.1017/psrm.2022.6}
+#'
+#' @examples
+#' data(nigeria_acled)
+#' nigeria_acled
+#' fit <- estimate_pals(nigeria_acled, model = "one")
+#' coef(fit)
+"nigeria_acled"

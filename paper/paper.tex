@@ -381,47 +381,45 @@ operational focus, and migrating populations move in response to events.
 For such \emph{moving actors}, the location at which two of them
 interact is itself a meaningful, modelable outcome, but standard
 spatial-interaction tools assume actors sit at fixed points and so
-cannot be applied directly. The Projected Actor Location (PALS) method,
-introduced by Kim et al. (2023), fills this gap by estimating where a
-mobile actor effectively ``is'' at any point in time from the
-spatiotemporal history of its past interactions, and using these
-projected locations to model the distance between --- and the
-probability of interaction among --- pairs of actors.
+cannot be applied directly. The Projected Actor Location (PALS) method
+(Kim et al. 2023) estimates where a mobile actor effectively ``is'' at any
+point in time from the spatiotemporal history of its past interactions,
+then uses these projected locations to model both the distance between
+pairs of actors and the probability that they interact.
 
 \texttt{palsr} is an R package (R Core Team 2024) that implements the
-complete PALS workflow: constructing and validating dyadic event data,
-estimating the smoothing parameters by minimizing great-circle
-prediction error, projecting actor locations at arbitrary times,
-building the dyadic distance covariates used in downstream interaction
-models, and quantifying uncertainty through a nonparametric bootstrap
-with multiple-imputation (Rubin's Rules) pooling. Performance-critical
-kernels --- the Haversine distance and the projection smoother --- are
-implemented in C++ through \texttt{Rcpp} (Eddelbuettel 2013), so that
-parameter estimation, which repeatedly re-projects every actor across a
-grid of times, runs quickly even on data sets with thousands of events.
+PALS workflow: constructing and validating dyadic event data, estimating
+the smoothing parameters by minimizing great-circle prediction error,
+projecting actor locations at arbitrary times, building the dyadic distance
+covariates used in downstream interaction models, and quantifying
+uncertainty through a nonparametric bootstrap with multiple-imputation
+(Rubin's Rules) pooling. The performance-critical kernels (the Haversine
+distance and the projection smoother) are implemented in C++ through
+\texttt{Rcpp} (Eddelbuettel 2013), so that parameter estimation, which
+repeatedly re-projects every actor across a grid of times, runs quickly
+even on data sets with thousands of events.
 
 \section{Statement of need}\label{statement-of-need}
 
-The empirical study of geopolitical interaction --- alliances, conflict,
-cooperation, trade --- is overwhelmingly \emph{dyadic}: the unit of
-analysis is a pair of actors, and a central predictor of whether and how
-two actors interact is the distance between them (Gleditsch and Ward
-2001; Ward et al. 2007). When actors are states with fixed capitals or
-centroids, this distance is trivial to compute. But a large and growing
-share of substantively important actors --- rebel groups, militias,
-terrorist organizations, peacekeeping deployments, non-governmental
-organizations --- are mobile. The fine-grained, geocoded event data that
+The empirical study of geopolitical interaction (alliances, conflict,
+cooperation, trade) is overwhelmingly \emph{dyadic}: the unit of analysis
+is a pair of actors, and a central predictor of whether and how two actors
+interact is the distance between them (Gleditsch and Ward 2001; Ward et al.
+2007). When actors are states with fixed capitals or centroids, this
+distance is trivial to compute. But many substantively important actors are
+mobile: rebel groups, militias, terrorist organizations, peacekeeping
+deployments, and non-governmental organizations. The fine-grained, geocoded event data that
 now document them, such as the Armed Conflict Location and Event Data
 project (Raleigh et al. 2010), record \emph{where each interaction
 happened} but assign actors no persistent coordinates. Treating these
 actors as fixed-location entities discards exactly the spatial dynamics
 that drive their interactions.
 
-Existing spatial software for R does not fill this gap. General
-geospatial toolkits such as \texttt{sf} (Pebesma 2018) and spatial
-point-process libraries such as \texttt{spatstat} (Baddeley and Turner
-2005) are powerful, but they operate on objects with given coordinates;
-they provide no way to \emph{infer} a moving actor's effective location,
+Existing R spatial software does not do this. General geospatial toolkits
+such as \texttt{sf} (Pebesma 2018) and spatial point-process libraries such
+as \texttt{spatstat} (Baddeley and Turner 2005) operate on objects with
+given coordinates; they provide no way to \emph{infer} a moving actor's
+effective location,
 let alone one tuned to predict future interactions. Conversely, dyadic
 interaction models in political science and economics typically take
 inter-actor distance as an exogenous input. Prior to PALS there was thus
@@ -429,18 +427,17 @@ no general, estimable method for assigning time-varying locations to
 mobile actors in a way that is optimized for predicting their
 interactions.
 
-PALS addresses this need, and the original article (Kim et al. 2023)
-demonstrates that PALS-based distances substantially improve the
-prediction of subnational conflict relative to naive location measures.
-However, that contribution was accompanied only by replication scripts
-specific to a single application. \texttt{palsr} turns the method into
-reusable, documented, and tested research software. It lets applied
-researchers in political science, conflict studies, economics, and
-geography apply PALS to their own dyadic event data without re-deriving
-the estimator, provides a principled bootstrap procedure for propagating
-estimation uncertainty into downstream models, and supplies a simulated
-example data set so that the full workflow can be learned and reproduced
-without access to restricted conflict data. To our knowledge it is the
+PALS was built for this setting, and the original article (Kim et al. 2023)
+shows that PALS-based distances substantially improve the prediction of
+subnational conflict relative to naive location measures. That contribution,
+however, came only with replication scripts specific to a single
+application. \texttt{palsr} packages the method as documented, tested
+software that others can reuse. Applied researchers in political science,
+conflict studies, economics, and geography can apply PALS to their own
+dyadic event data without re-deriving the estimator; the package propagates
+estimation uncertainty into downstream models through an event bootstrap,
+and it ships both the original ACLED Nigeria data and a simulated-data generator,
+so the full workflow can be learned and reproduced out of the box. To our knowledge it is the
 first general-purpose software implementation of projected-location
 modeling for moving actors.
 
@@ -458,17 +455,16 @@ g_i(t) = (1-\pi)\sum_e W_i(e)\, g(e) \;+\; \pi \sum_e W_k(e)\, g(e),
 \qquad \pi = \mathrm{logistic}(\gamma + \eta\, v),
 \]
 
-where event weights decay with age in the manner of exponential
-smoothing (Gardner Jr. 2006) --- governed by \(\alpha\) for the focal
-actor and \(\beta\) for the alters --- and the mixing weight \(\pi\)
-depends through \(\gamma\) and \(\eta\) on the focal actor's activity
-relative to its alters, summarized by the event-count statistic \(v\).
-The four parameters are estimated by ``marching forward'' through time:
-every event is predicted using only events strictly preceding it, and
-parameters are chosen to minimize the mean Haversine distance between
-predicted and observed interaction locations. The package also exposes a
-parsimonious one-parameter variant that fixes \(\pi = 0\) and estimates
-only \(\alpha\), which is fast and frequently competitive.
+where event weights decay with age as in exponential smoothing (Gardner Jr.
+2006), governed by \(\alpha\) for the focal actor and \(\beta\) for the
+alters, and the mixing weight \(\pi\) depends through \(\gamma\) and
+\(\eta\) on the focal actor's activity relative to its alters, summarized by
+the event-count statistic \(v\). The four parameters are estimated by
+``marching forward'' through time: every event is predicted using only
+events strictly preceding it, and parameters are chosen to minimize the mean
+Haversine distance between predicted and observed interaction locations. The
+package also provides a one-parameter variant that fixes \(\pi = 0\) and
+estimates only \(\alpha\), which is fast and frequently competitive.
 
 Because the projected location is recomputed as time advances, each
 actor traces a \emph{trajectory} through space rather than occupying a
@@ -479,12 +475,13 @@ events.
 
 \begin{figure}
 \centering
-\includegraphics[width=0.85\linewidth,height=\textheight,keepaspectratio,alt={Projected locations of four actors in the simulated nigeria\_sim data, fit with the one-parameter model and projected at yearly intervals from 2005 to 2016. Grey points are the observed dyadic events; coloured paths trace each actor's PALS-projected trajectory (arrows point forward in time). }]{figure-trajectories.png}
-\caption{Projected locations of four actors in the simulated
-\protect\texttt{nigeria\_sim} data, fit with the one-parameter model and
-projected at yearly intervals from 2005 to 2016. Grey points are the
-observed dyadic events; coloured paths trace each actor's PALS-projected
-trajectory (arrows point forward in time). \label{fig:traj}}
+\includegraphics[width=0.85\linewidth,height=\textheight,keepaspectratio,alt={PALS-projected locations of four major actors in the nigeria\_acled ACLED data (Boko Haram, the Nigerian military and police, and the Fulani Ethnic Militia), fit with the one-parameter model and projected at yearly intervals from 2009 to 2016. Grey points are the observed conflict events; coloured paths trace each actor's projected trajectory (arrows point forward in time). }]{figure-trajectories.png}
+\caption{PALS-projected locations of four major actors in the
+\protect\texttt{nigeria\_acled} ACLED data (Boko Haram, the Nigerian military and
+police, and the Fulani Ethnic Militia), fit with the one-parameter model and
+projected at yearly intervals from 2009 to 2016. Grey points are the observed
+conflict events; coloured paths trace each actor's projected trajectory (arrows
+point forward in time). \label{fig:traj}}
 \end{figure}
 
 \section{Key features}\label{key-features}
@@ -511,7 +508,7 @@ trajectory (arrows point forward in time). \label{fig:traj}}
   \texttt{pool\_rubin()}) via a nonparametric event bootstrap and
   Rubin's Rules (Rubin 1987).
 \item
-  \textbf{Reproducible example data} (\texttt{nigeria\_sim},
+  \textbf{Reproducible example data} (\texttt{nigeria\_acled},
   \texttt{simulate\_conflict\_events()}), a vignette, and a full
   \texttt{testthat} suite that also checks the C++ kernels against
   pure-R reference implementations.
@@ -522,20 +519,26 @@ trajectory (arrows point forward in time). \label{fig:traj}}
 \begin{Shaded}
 \begin{Highlighting}[]
 \FunctionTok{library}\NormalTok{(palsr)}
-\FunctionTok{data}\NormalTok{(nigeria\_sim)                       }\CommentTok{\# 1,500 dyadic events, 25 mobile actors}
+\FunctionTok{data}\NormalTok{(nigeria\_acled)   }\CommentTok{\# 1,549 ACLED conflict events (Nigeria)}
 
-\NormalTok{fit }\OtherTok{\textless{}{-}} \FunctionTok{estimate\_pals}\NormalTok{(nigeria\_sim, }\AttributeTok{model =} \StringTok{"one"}\NormalTok{)   }\CommentTok{\# estimate alpha}
+\NormalTok{fit }\OtherTok{\textless{}{-}} \FunctionTok{estimate\_pals}\NormalTok{(nigeria\_acled, }\AttributeTok{model =} \StringTok{"one"}\NormalTok{)   }\CommentTok{\# estimate alpha}
 \FunctionTok{coef}\NormalTok{(fit)}
 
 \CommentTok{\# Project where each actor is on a given date.}
-\FunctionTok{project\_pals}\NormalTok{(nigeria\_sim, }\AttributeTok{predict\_time =} \FunctionTok{as.Date}\NormalTok{(}\StringTok{"2015{-}01{-}01"}\NormalTok{), }\AttributeTok{params =}\NormalTok{ fit)}
+\FunctionTok{project\_pals}\NormalTok{(nigeria\_acled,}
+\NormalTok{             }\AttributeTok{predict\_time =} \FunctionTok{as.Date}\NormalTok{(}\StringTok{"2015{-}12{-}01"}\NormalTok{),}
+\NormalTok{             }\AttributeTok{params =}\NormalTok{ fit)}
 
 \CommentTok{\# Build the dyadic distance covariate for an interaction model.}
-\NormalTok{dyads }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{actor1 =} \StringTok{"G01"}\NormalTok{, }\AttributeTok{actor2 =} \StringTok{"G02"}\NormalTok{, }\AttributeTok{time =} \FunctionTok{as.Date}\NormalTok{(}\StringTok{"2014{-}06{-}01"}\NormalTok{))}
-\FunctionTok{pal\_distance}\NormalTok{(nigeria\_sim, dyads, fit, }\AttributeTok{transform =} \StringTok{"log"}\NormalTok{)}
+\NormalTok{dyads }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}
+\NormalTok{  }\AttributeTok{actor1 =} \StringTok{"Boko Haram"}\NormalTok{,}
+\NormalTok{  }\AttributeTok{actor2 =} \StringTok{"Fulani Ethnic Militia (Nigeria)"}\NormalTok{,}
+\NormalTok{  }\AttributeTok{time   =} \FunctionTok{as.Date}\NormalTok{(}\StringTok{"2014{-}06{-}01"}\NormalTok{)}
+\NormalTok{)}
+\FunctionTok{pal\_distance}\NormalTok{(nigeria\_acled, dyads, fit, }\AttributeTok{transform =} \StringTok{"log"}\NormalTok{)}
 
 \CommentTok{\# Bootstrap uncertainty in the smoothing parameter.}
-\FunctionTok{summary}\NormalTok{(}\FunctionTok{bootstrap\_pals}\NormalTok{(nigeria\_sim, }\AttributeTok{R =} \DecValTok{10}\NormalTok{, }\AttributeTok{model =} \StringTok{"one"}\NormalTok{, }\AttributeTok{seed =} \DecValTok{1}\NormalTok{))}
+\FunctionTok{summary}\NormalTok{(}\FunctionTok{bootstrap\_pals}\NormalTok{(nigeria\_acled, }\AttributeTok{R =} \DecValTok{10}\NormalTok{, }\AttributeTok{model =} \StringTok{"one"}\NormalTok{, }\AttributeTok{seed =} \DecValTok{1}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
 
@@ -544,7 +547,7 @@ control}\label{availability-and-quality-control}
 
 \texttt{palsr} is developed openly on GitHub. The package ships with
 documentation for every exported function, an introductory vignette that
-walks through the full workflow on \texttt{nigeria\_sim}, and a
+walks through the full workflow on \texttt{nigeria\_acled}, and a
 \texttt{testthat} suite covering data validation, estimation,
 projection, distance construction, and uncertainty quantification. The
 tests additionally verify the compiled C++ kernels against independent
@@ -553,9 +556,11 @@ pure-R reference implementations, and continuous integration runs
 
 \section{Acknowledgements}\label{acknowledgements}
 
-We thank the editors and reviewers of \emph{Political Science Research
-and Methods} for feedback on the method, and the developers of
-\texttt{Rcpp} (Eddelbuettel 2013) for the tooling that underpins the
+This work was supported by the U.S. National Science Foundation under the
+collaborative project ``Georelational Dynamics in Collective Action'' (awards
+2446647 to B.A.D. and 2446646 to H.L.). We thank the editors and reviewers of
+\emph{Political Science Research and Methods} for feedback on the method, and the
+developers of \texttt{Rcpp} (Eddelbuettel 2013) for the tooling that underpins the
 package's performance.
 
 \section*{References}\label{references}

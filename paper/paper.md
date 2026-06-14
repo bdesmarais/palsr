@@ -34,59 +34,55 @@ international organizations shift their operational focus, and migrating
 populations move in response to events. For such *moving actors*, the location
 at which two of them interact is itself a meaningful, modelable outcome, but
 standard spatial-interaction tools assume actors sit at fixed points and so
-cannot be applied directly. The Projected Actor Location (PALS) method, introduced
-by @kim2023pals, fills this gap by estimating where a mobile actor effectively
-"is" at any point in time from the spatiotemporal history of its past
-interactions, and using these projected locations to model the distance between
---- and the probability of interaction among --- pairs of actors.
+cannot be applied directly. The Projected Actor Location (PALS) method
+[@kim2023pals] estimates where a mobile actor effectively "is" at any point in time
+from the spatiotemporal history of its past interactions, then uses these projected
+locations to model both the distance between pairs of actors and the probability that
+they interact.
 
-`palsr` is an R package [@rcoreteam] that implements the complete PALS workflow:
+`palsr` is an R package [@rcoreteam] that implements the PALS workflow:
 constructing and validating dyadic event data, estimating the smoothing parameters by
-minimizing great-circle prediction error, projecting actor locations at
-arbitrary times, building the dyadic distance covariates used in downstream
-interaction models, and quantifying uncertainty through a nonparametric
-bootstrap with multiple-imputation (Rubin's Rules) pooling. Performance-critical
-kernels --- the Haversine distance and the projection smoother --- are
-implemented in C++ through `Rcpp` [@rcpp], so that parameter estimation, which
-repeatedly re-projects every actor across a grid of times, runs quickly even on
-data sets with thousands of events.
+minimizing great-circle prediction error, projecting actor locations at arbitrary
+times, building the dyadic distance covariates used in downstream interaction models,
+and quantifying uncertainty through a nonparametric bootstrap with multiple-imputation
+(Rubin's Rules) pooling. The performance-critical kernels (the Haversine distance and
+the projection smoother) are implemented in C++ through `Rcpp` [@rcpp], so that
+parameter estimation, which repeatedly re-projects every actor across a grid of times,
+runs quickly even on data sets with thousands of events.
 
 # Statement of need
 
-The empirical study of geopolitical interaction --- alliances, conflict,
-cooperation, trade --- is overwhelmingly *dyadic*: the unit of analysis is a
-pair of actors, and a central predictor of whether and how two actors interact
-is the distance between them [@gleditsch2001; @ward2007]. When actors are
-states with fixed capitals or centroids, this distance is trivial to compute.
-But a large and growing share of substantively important actors --- rebel
-groups, militias, terrorist organizations, peacekeeping deployments,
-non-governmental organizations --- are mobile. The fine-grained, geocoded event
+The empirical study of geopolitical interaction (alliances, conflict, cooperation,
+trade) is overwhelmingly *dyadic*: the unit of analysis is a pair of actors, and a
+central predictor of whether and how two actors interact is the distance between them
+[@gleditsch2001; @ward2007]. When actors are states with fixed capitals or centroids,
+this distance is trivial to compute. But many substantively important actors are
+mobile: rebel groups, militias, terrorist organizations, peacekeeping deployments,
+and non-governmental organizations. The fine-grained, geocoded event
 data that now document them, such as the Armed Conflict Location and Event Data
 project [@acled], record *where each interaction happened* but assign actors no
 persistent coordinates. Treating these actors as fixed-location entities
 discards exactly the spatial dynamics that drive their interactions.
 
-Existing spatial software for R does not fill this gap. General geospatial
-toolkits such as `sf` [@sf] and spatial point-process libraries such as
-`spatstat` [@spatstat] are powerful, but they operate on objects with given
-coordinates; they provide no way to *infer* a moving actor's effective location,
-let alone one tuned to predict future interactions. Conversely, dyadic
+Existing R spatial software does not do this. General geospatial toolkits such as
+`sf` [@sf] and spatial point-process libraries such as `spatstat` [@spatstat] operate
+on objects with given coordinates; they provide no way to *infer* a moving actor's
+effective location, let alone one tuned to predict future interactions. Conversely, dyadic
 interaction models in political science and economics typically take inter-actor
 distance as an exogenous input. Prior to PALS there was thus no general,
 estimable method for assigning time-varying locations to mobile actors in a way
 that is optimized for predicting their interactions.
 
-PALS addresses this need, and the original article [@kim2023pals] demonstrates
-that PALS-based distances substantially improve the prediction of subnational
-conflict relative to naive location measures. However, that contribution was
-accompanied only by replication scripts specific to a single application.
-`palsr` turns the method into reusable, documented, and tested research software.
-It lets applied researchers in political science, conflict studies, economics,
-and geography apply PALS to their own dyadic event data without re-deriving the
-estimator, provides a principled bootstrap procedure for propagating estimation
-uncertainty into downstream models, and supplies a simulated example data set so
-that the full workflow can be learned and reproduced without access to
-restricted conflict data. To our knowledge it is the first general-purpose
+PALS was built for this setting, and the original article [@kim2023pals] shows that
+PALS-based distances substantially improve the prediction of subnational conflict
+relative to naive location measures. That contribution, however, came only with
+replication scripts specific to a single application. `palsr` packages the method as
+documented, tested software that others can reuse. Applied researchers in political
+science, conflict studies, economics, and geography can apply PALS to their own dyadic
+event data without re-deriving the estimator; the package propagates estimation
+uncertainty into downstream models through an event bootstrap, and it ships both the
+original ACLED Nigeria data and a simulated-data generator, so the full workflow can be
+learned and reproduced out of the box. To our knowledge it is the first general-purpose
 software implementation of projected-location modeling for moving actors.
 
 # Method
@@ -102,16 +98,15 @@ g_i(t) = (1-\pi)\sum_e W_i(e)\, g(e) \;+\; \pi \sum_e W_k(e)\, g(e),
 \qquad \pi = \mathrm{logistic}(\gamma + \eta\, v),
 $$
 
-where event weights decay with age in the manner of exponential smoothing
-[@gardner2006] --- governed by $\alpha$ for the focal actor and $\beta$ for the
-alters --- and the mixing weight $\pi$ depends through $\gamma$ and $\eta$ on the
-focal actor's activity relative to its alters, summarized by the event-count
-statistic $v$. The four parameters are estimated by "marching forward" through
-time: every event is predicted using only events strictly preceding it, and
-parameters are chosen to minimize the mean Haversine distance between predicted
-and observed interaction locations. The package also exposes a parsimonious
-one-parameter variant that fixes $\pi = 0$ and estimates only $\alpha$, which is
-fast and frequently competitive.
+where event weights decay with age as in exponential smoothing [@gardner2006],
+governed by $\alpha$ for the focal actor and $\beta$ for the alters, and the mixing
+weight $\pi$ depends through $\gamma$ and $\eta$ on the focal actor's activity relative
+to its alters, summarized by the event-count statistic $v$. The four parameters are
+estimated by "marching forward" through time: every event is predicted using only
+events strictly preceding it, and parameters are chosen to minimize the mean Haversine
+distance between predicted and observed interaction locations. The package also
+provides a one-parameter variant that fixes $\pi = 0$ and estimates only $\alpha$,
+which is fast and frequently competitive.
 
 Because the projected location is recomputed as time advances, each actor traces
 a *trajectory* through space rather than occupying a fixed point.
@@ -119,7 +114,7 @@ a *trajectory* through space rather than occupying a fixed point.
 data: PALS projects each actor's location at yearly intervals, and the resulting
 paths drift through the cloud of observed events.
 
-![Projected locations of four actors in the simulated `nigeria_sim` data, fit with the one-parameter model and projected at yearly intervals from 2005 to 2016. Grey points are the observed dyadic events; coloured paths trace each actor's PALS-projected trajectory (arrows point forward in time). \label{fig:traj}](figure-trajectories.png){ width=85% }
+![PALS-projected locations of four major actors in the `nigeria_acled` ACLED data (Boko Haram, the Nigerian military and police, and the Fulani Ethnic Militia), fit with the one-parameter model and projected at yearly intervals from 2009 to 2016. Grey points are the observed conflict events; coloured paths trace each actor's projected trajectory (arrows point forward in time). \label{fig:traj}](figure-trajectories.png){ width=85% }
 
 # Key features
 
@@ -143,20 +138,26 @@ paths drift through the cloud of observed events.
 
 ```r
 library(palsr)
-data(nigeria_sim)                       # 1,500 dyadic events, 25 mobile actors
+data(nigeria_acled)   # 1,549 ACLED conflict events (Nigeria)
 
-fit <- estimate_pals(nigeria_sim, model = "one")   # estimate alpha
+fit <- estimate_pals(nigeria_acled, model = "one")   # estimate alpha
 coef(fit)
 
 # Project where each actor is on a given date.
-project_pals(nigeria_sim, predict_time = as.Date("2015-01-01"), params = fit)
+project_pals(nigeria_acled,
+             predict_time = as.Date("2015-12-01"),
+             params = fit)
 
 # Build the dyadic distance covariate for an interaction model.
-dyads <- data.frame(actor1 = "G01", actor2 = "G02", time = as.Date("2014-06-01"))
-pal_distance(nigeria_sim, dyads, fit, transform = "log")
+dyads <- data.frame(
+  actor1 = "Boko Haram",
+  actor2 = "Fulani Ethnic Militia (Nigeria)",
+  time   = as.Date("2014-06-01")
+)
+pal_distance(nigeria_acled, dyads, fit, transform = "log")
 
 # Bootstrap uncertainty in the smoothing parameter.
-summary(bootstrap_pals(nigeria_sim, R = 10, model = "one", seed = 1))
+summary(bootstrap_pals(nigeria_acled, R = 10, model = "one", seed = 1))
 ```
 
 # Availability and quality control
@@ -171,8 +172,10 @@ across Linux, macOS, and Windows on every change.
 
 # Acknowledgements
 
-We thank the editors and reviewers of *Political Science Research and Methods*
-for feedback on the method, and the developers of `Rcpp` [@rcpp] for the tooling
-that underpins the package's performance.
+This work was supported by the U.S. National Science Foundation under the
+collaborative project "Georelational Dynamics in Collective Action" (awards 2446647
+to B.A.D. and 2446646 to H.L.). We thank the editors and reviewers of *Political
+Science Research and Methods* for feedback on the method, and the developers of
+`Rcpp` [@rcpp] for the tooling that underpins the package's performance.
 
 # References

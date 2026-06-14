@@ -64,10 +64,13 @@ Numbered decisions, each with the question, the choice, and why. Referenced from
     simulated data. *Why:* keep the package focused, dependency-light, and broadly useful;
     re-bundling AMEN (a separate package, non-CRAN git ref) is out of scope for JOSS.
 
-12. **Example data = simulated, not ACLED.** → Ship `simulate_conflict_events()` +
-    `nigeria_sim`. *Why:* ACLED has licensing/redistribution constraints; a generator with
-    mobile actor clusters reproduces the qualitative structure the method targets and
-    makes examples/tests fully self-contained and deterministic (seeded).
+12. **Example data: real ACLED + a simulator.** → Ship the real ACLED Nigeria data used in
+    the paper (`nigeria_acled`, from the public Dataverse replication, doi:10.7910/DVN/NLWWPE)
+    as the featured example, plus `simulate_conflict_events()` + `nigeria_sim` for
+    deterministic, license-free tests/examples. *Why:* the real data is already public in the
+    replication archive and makes the paper concrete; the simulator keeps tests
+    self-contained and seeded. (ACLED's terms of use still apply to the bundled data; this
+    reverses the earlier simulated-only decision at the author's request.)
 
 13. **Rubin pooling completeness.** → Provide the source's normal-based
     `T=W+(1+1/m)B` plus optional Barnard–Rubin df. *Why:* exact replication by default,
