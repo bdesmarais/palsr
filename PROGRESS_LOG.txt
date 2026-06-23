@@ -179,3 +179,23 @@ full testthat suite passes.
   added inst/CITATION (PSRM method paper). R CMD check: Status: OK.
 - JOSS submission form (joss.theoj.org/papers/new) requires ORCID/GitHub login;
   Bruce is not logged in, so final submit is gated on him. Prepared everything else.
+
+=== JOSS REJECTED -> R JOURNAL PIVOT (2026-06-23) ===
+- JOSS desk-rejected (issue #10781, editor samhforbes): "does not fall within our
+  scope... we require at least 6 months of open development history, clear community
+  engagement and demonstrated impact." (Repo created 2026-06-06, so the 6-month rule
+  was the killer, as flagged pre-submission.)
+- Alternative outlet chosen: THE R JOURNAL (free, canonical R-package venue, peer-
+  reviewed on merit with NO maturity/impact gate). Considered JORS (£800 APC) and
+  SoftwareX; R Journal is the best fit.
+- Executed the revision in paper-rjournal/: full contributed article reformatted to
+  R Journal LaTeX (official RJournal.sty + natbib/BibTeX), expanded from the JOSS
+  paper with a real worked example on nigeria_acled (alpha~1.24, four-param shows
+  pi~0 so one-param is competitive; Boko Haram<->Fulani PAL distance 445.6 km;
+  bootstrap 95% CI [1.08,1.45]). Compiles clean: RJwrapper.pdf, 6 pages, 0 errors.
+- Built the submission bundle: motivation-letter.md (cover letter), _Rpackages.txt,
+  reproduce.R, figure-trajectories.png, palsr-RJsubmission.zip. All committed/pushed.
+- Submission is via a Google Form (requires Google sign-in + zip upload) -> gated on
+  Bruce. Reached the form, captured all 15 fields, emailed Bruce exact paste values
+  + the zip link. CAVEAT for later: R Journal expects CRAN availability by acceptance;
+  palsr is not yet on CRAN (can prep that next).
