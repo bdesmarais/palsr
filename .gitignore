@@ -17,18 +17,6 @@ src/*.dll
 inst/doc/
 revdep/
 
-# JOSS paper build artifacts (keep paper.pdf and paper.tex tracked for review)
-paper/*.jats
-paper/media/
-paper/*.aux
-paper/*.log
-paper/*.out
-paper/*.bbl
-paper/*.blg
-paper/*.run.xml
-paper/*.fls
-paper/*.fdb_latexmk
-
 # OS / editor
 .DS_Store
 *~
@@ -36,14 +24,3 @@ paper/*.fdb_latexmk
 
 # Machine-specific local env
 .Renviron
-
-# paper biber/latex artifacts
-paper/*.bcf
-paper/*.run.xml
-paper-rjournal/*.aux
-paper-rjournal/*.log
-paper-rjournal/*.out
-paper-rjournal/*.brf
-paper-rjournal/*.bbl
-paper-rjournal/*.blg
-paper-rjournal/palsr-RJsubmission/

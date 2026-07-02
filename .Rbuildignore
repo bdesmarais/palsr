@@ -3,16 +3,7 @@
 ^\.Renviron$
 ^\.github$
 ^data-raw$
-^docs-research$
-^paper$
-^PROGRESS_LOG\.txt$
-^ALGORITHM\.md$
-^DESIGN\.md$
-^DECISIONS\.md$
-^PLAN\.md$
-^README\.Rmd$
 ^LICENSE\.md$
 ^\.DS_Store$
 ^cran-comments\.md$
 ^CONTRIBUTING\.md$
-^paper-rjournal$
