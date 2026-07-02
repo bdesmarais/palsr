@@ -1,3 +1,0 @@
-palsr
-Rcpp
-ggplot2
