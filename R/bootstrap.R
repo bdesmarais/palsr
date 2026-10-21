@@ -18,6 +18,13 @@
 #' @param actors For projection, which actors to project (default: all in `events`).
 #' @param seed Optional integer seed; replicate `r` uses `seed + r` so the whole run
 #'   is reproducible.
+#' @param block Resampling unit. `NULL` (default) resamples individual events
+#'   (i.i.d.), which assumes events are exchangeable. `"year"` resamples whole
+#'   calendar years of `events$time` with replacement instead, preserving
+#'   within-year temporal and actor dependence; a user-supplied vector of length
+#'   `nrow(events)` giving a block id per event (e.g. actor or dyad id, for a
+#'   cluster bootstrap over actors or dyads) is also accepted. Use a block bootstrap whenever events
+#'   are not plausibly independent across time or actors; see the package vignette.
 #' @param ... Further arguments passed to [estimate_pals] (e.g. `aggregate`,
 #'   `alter_weight`, `method`, `control`).
 #'
@@ -47,7 +54,7 @@
 #' @export
 bootstrap_pals <- function(events, R = 50, model = c("four", "one"),
                            predict_time = NULL, actors = NULL,
-                           seed = NULL, ...) {
+                           seed = NULL, block = NULL, ...) {
   stopifnot(inherits(events, "pal_events"))
   model <- match.arg(model)
   if (!is.numeric(R) || length(R) != 1 || R < 1)
@@ -59,6 +66,13 @@ bootstrap_pals <- function(events, R = 50, model = c("four", "one"),
   point <- estimate_pals(events, model = model, ...)
 
   n <- nrow(events)
+  block_id <- NULL
+  if (!is.null(block)) {
+    block_id <- if (identical(block, "year")) format(events$time, "%Y") else block
+    if (length(block_id) != n)
+      stop("`block` must be \"year\" or a vector of length nrow(events).", call. = FALSE)
+    blocks <- unique(block_id)
+  }
   est_list <- vector("list", R)
   proj_list <- if (is.null(predict_time)) NULL else vector("list", R)
 
@@ -67,7 +81,12 @@ bootstrap_pals <- function(events, R = 50, model = c("four", "one"),
       old <- .Random.seed_safe(); on.exit(.restore_seed(old), add = TRUE)
       set.seed(seed + r)
     }
-    idx <- sample.int(n, n, replace = TRUE)
+    if (is.null(block)) {
+      idx <- sample.int(n, n, replace = TRUE)
+    } else {
+      chosen <- sample(blocks, length(blocks), replace = TRUE)
+      idx <- unlist(lapply(chosen, function(b) which(block_id == b)), use.names = FALSE)
+    }
     bev <- events[idx, , drop = FALSE]
     rownames(bev) <- NULL
     class(bev) <- c("pal_events", "data.frame")

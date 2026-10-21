@@ -38,6 +38,24 @@ test_that("bootstrap_pals validates its inputs", {
   expect_error(bootstrap_pals(list()), "pal_events")
 })
 
+test_that("bootstrap_pals supports a block bootstrap over calendar years", {
+  ev <- make_sim_events()
+  bt <- bootstrap_pals(ev, R = 6, model = "one", seed = 1, block = "year")
+  expect_s3_class(bt, "pals_boot")
+  expect_true(nrow(bt$estimates) >= 1)
+})
+
+test_that("bootstrap_pals supports a user-supplied block vector (e.g. actor clusters)", {
+  ev <- make_sim_events()
+  bt <- bootstrap_pals(ev, R = 6, model = "one", seed = 1, block = ev$actor1)
+  expect_s3_class(bt, "pals_boot")
+})
+
+test_that("bootstrap_pals rejects a mis-sized block vector", {
+  ev <- make_sim_events()
+  expect_error(bootstrap_pals(ev, R = 2, block = 1:3), "length")
+})
+
 test_that("pool_rubin pools estimates with Rubin's Rules", {
   q <- c(1.10, 0.95, 1.20, 1.05, 0.98)
   u <- c(0.04, 0.05, 0.045, 0.038, 0.052)

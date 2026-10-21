@@ -1,3 +1,21 @@
+# palsr 0.1.1
+
+* New `rolling_origin_pals()`: a genuine out-of-sample (rolling-origin)
+  evaluation, re-estimating the model at each of a set of origin dates from
+  strictly earlier events and scoring predictions on the following holdout
+  window. Complements the one-step-ahead ("marching forward") criterion that
+  `estimate_pals()` minimizes, in which every event's own location
+  contributes to the single fitted parameter vector.
+* `bootstrap_pals()` gains a `block` argument for a block bootstrap
+  (`block = "year"`, or a user-supplied grouping vector) that preserves
+  within-block temporal/actor dependence, as an alternative to the default
+  i.i.d. event bootstrap.
+* README: fixed the `pool_rubin()` quick-start example, which errored with
+  "unused arguments" when called with `q =`/`u =` (the function's arguments
+  are named `estimates`/`variances`); updated install instructions to lead
+  with CRAN and to add `build_vignettes = TRUE` to the GitHub install
+  example, so `vignette("palsr")` is available after following the README.
+
 # palsr 0.1.0
 
 * Initial release implementing the Projected Actor Location (PALS) method of

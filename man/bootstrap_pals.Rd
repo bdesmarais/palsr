@@ -11,6 +11,7 @@ bootstrap_pals(
   predict_time = NULL,
   actors = NULL,
   seed = NULL,
+  block = NULL,
   ...
 )
 }
@@ -29,6 +30,14 @@ coordinates across replicates is available for confidence regions and pooling.}
 
 \item{seed}{Optional integer seed; replicate \code{r} uses \code{seed + r} so the whole run
 is reproducible.}
+
+\item{block}{Resampling unit. \code{NULL} (default) resamples individual events
+(i.i.d.), which assumes events are exchangeable. \code{"year"} resamples whole
+calendar years of \code{events$time} with replacement instead, preserving
+within-year temporal and actor dependence; a user-supplied vector of length
+\code{nrow(events)} giving a block id per event (e.g. actor or dyad id, for a
+cluster bootstrap over actors or dyads) is also accepted. Use a block bootstrap whenever events
+are not plausibly independent across time or actors; see the package vignette.}
 
 \item{...}{Further arguments passed to \link{estimate_pals} (e.g. \code{aggregate},
 \code{alter_weight}, \code{method}, \code{control}).}

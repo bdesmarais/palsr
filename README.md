@@ -21,12 +21,23 @@ actor's own history with that of its interaction partners ("alters").
 ## Installation
 
 ```r
+install.packages("palsr")
+```
+
+For the development version from GitHub, pass `build_vignettes = TRUE` so that
+`vignette("palsr")` (below) is available; `remotes::install_github()` does not build
+vignettes by default, and building them requires [pandoc](https://pandoc.org) to be
+installed:
+
+```r
 install.packages("remotes")   # if not already installed
-remotes::install_github("bdesmarais/palsr")
+remotes::install_github("bdesmarais/palsr", build_vignettes = TRUE)
 ```
 
 The package compiles a small amount of C++ via Rcpp, so a working toolchain
-(Rtools on Windows, Xcode command-line tools on macOS) is required.
+(Rtools on Windows, Xcode command-line tools on macOS) is required to install from
+source (the CRAN route above installs a prebuilt binary on Windows and macOS, so no
+toolchain is needed there).
 
 ## The method
 
@@ -96,9 +107,19 @@ via `pool_rubin()`:
 bt <- bootstrap_pals(nigeria_sim, R = 10, model = "one", seed = 1)
 summary(bt)
 
-# Pool five per-replicate estimates (q) and their variances (u).
-pool_rubin(q = c(1.10, 0.95, 1.20, 1.05, 0.98),
-           u = c(0.04, 0.05, 0.045, 0.038, 0.052))
+# Pool five per-replicate estimates and their variances with Rubin's Rules.
+q <- c(1.10, 0.95, 1.20, 1.05, 0.98)       # per-replicate point estimates
+u <- c(0.04, 0.05, 0.045, 0.038, 0.052)    # per-replicate variances
+pool_rubin(q, u)
+```
+
+Events are not always exchangeable: `nigeria_acled` events cluster by year and by
+actor, so the default event-level bootstrap above can understate uncertainty. Pass
+`block = "year"` (or a vector of actor/dyad ids) to resample whole blocks instead:
+
+```r
+bt_block <- bootstrap_pals(nigeria_sim, R = 10, model = "one", seed = 1, block = "year")
+summary(bt_block)
 ```
 
 ## Learn more
